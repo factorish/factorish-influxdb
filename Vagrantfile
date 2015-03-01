@@ -45,6 +45,10 @@ Vagrant.configure('2') do |config|
       c.vm.network 'forwarded_port', guest: $expose_docker_tcp, host: $expose_docker_tcp, auto_correct: true if $expose_docker_tcp
       c.vm.network 'forwarded_port', guest: $expose_etcd_tcp, host: $expose_etcd_tcp, auto_correct: true if $expose_etcd_tcp
 
+      $expose_ports.each do |port|
+        c.vm.network 'forwarded_port', guest: port, host: port, auto_correct: true
+      end
+
       c.vm.provider :virtualbox do |vb|
         vb.gui = $vb_gui
         vb.memory = $vb_memory

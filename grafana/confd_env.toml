@@ -1,4 +1,4 @@
-backend = "env" # etcd
+backend = "env"
 confdir = "/app"
 interval = 5
 prefix = "/"

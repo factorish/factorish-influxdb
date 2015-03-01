@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # fail hard and fast even on pipelines
-set -eo pipefail
+# set -eo pipefail
 
 # set debug based on envvar
 [[ $DEBUG ]] && set -x
@@ -13,12 +13,12 @@ trap on_exit INT TERM
 
 # wait for the service to become available
 sleep 20
-while [[ -z $(netstat -lnt | awk "\$6 == \"LISTEN\" && \$4 ~ \".$PUBLISH\" && \$1 ~ \"$PROTO.?\"") ]] ; do sleep 1; done
+while  [[ -z $(netstat -lnt | awk "\$6 == \"LISTEN\" && \$4 ~ \".8080\" && \$1 ~ \"TCP.?\"") ]] ; do sleep 1; done
 # health checks
 if [[ ! -z $PUBLISH ]]; then
   set +e
   # while the port is listening we're okay
-  while [[ ! -z $(netstat -lnt | awk "\$6 == \"LISTEN\" && \$4 ~ \".$PUBLISH\" && \$1 ~ \"$PROTO.?\"") ]] ; do
+  while  [[ -n $(netstat -lnt | awk "\$6 == \"LISTEN\" && \$4 ~ \".8080\" && \$1 ~ \"TCP.?\"") ]]; do
     sleep 30
   done
   # if the loop quits, something went wrong

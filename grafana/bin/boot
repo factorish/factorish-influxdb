@@ -6,6 +6,9 @@
 # fail hard and fast even on pipelines
 set -eo pipefail
 
+# smart shutdown on SIGINT and SIGTERM
+trap on_exit INT TERM
+
 # set debug based on envvar
 [[ $DEBUG ]] && set -x
 
@@ -18,25 +21,28 @@ DIR=$(dirname $0)
 # Environment variables that should be passed in via `docker run` command.
 
 # Defaults for your app:
-export APP_NAME=${APP_NAME:-"example"}
-export PUBLISH=${PUBLISH:-8080}
-export PORT=${PORT:-8080}
-export PROTO=${PROTO:-tcp}
-export SERVICES_EXAMPLE_TEXT=${SERVICES_EXAMPLE_TEXT:-"father"}
+export APP_NAME=${APP_NAME:-"grafana"}
+export GRAFANA_DATABASE=${GRAFANA_DATABASE:-'grafana'}
+export GRAFANA_USER=${GRAFANA_USER:-'grafana'}
+export GRAFANA_PASS=${GRAFANA_PASS:-'grafana'}
+export GRAFANA_METRICS_DATABASE=${GRAFANA_METRICS_DATABASE:-'grafana_metrics'}
+export GRAFANA_METRICS_USER=${GRAFANA_METRICS_USER:-'grafana_metrics'}
+export GRAFANA_METRICS_PASS=${GRAFANA_METRICS_PASS:-'grafana_metrics'}
 
 if [[ -n $ETCD_HOST ]]; then
   echo '==> $HOST or $ETCD_HOST set.  starting ${APP_NAME} etcd support.'
   export ETCD_HOST=${ETCD_HOST:-$HOST}
   export ETCD_PORT=${ETCD_PORT:-4001}
   export ETCD="$ETCD_HOST:$ETCD_PORT"
-  export ETCD_PATH=${ETCD_PATH:-"/services/$APP_NAME"}
+  export ETCD_PATH=${ETCD_PATH:-"/services"}
   export ETCD_TTL=${ETCD_TTL:-10}
   export ETCD_OPTIONS="--no-sync -C $ETCD"
-  export CONFD_OPTIONS="-node $ETCD -config-file /app/confd_etcd.toml"
+  export CONFD_OPTIONS="-node $ETCD -config-file /app/confd_etcd.toml -debug -quiet=false"
   export SLEEP_TIME=$(($ETCD_TTL/2))
   configure_etcd
   # App specific
-  etcd_set_default text $SERVICES_EXAMPLE_TEXT
+  etcd_set_default influxdb/databases/${GRAFANA_DATABASE}/users/${GRAFANA_USER} ${GRAFANA_PASS}
+  etcd_set_default influxdb/databases/${GRAFANA_METRICS_DATABASE}/users/${GRAFANA_METRICS_USER} ${GRAFANA_METRICS_PASS}
 else
   echo '==> $HOST not set.  starting ${APP_NAME} without etcd support.'
   export CONFD_OPTIONS="-config-file /app/confd_env.toml"
